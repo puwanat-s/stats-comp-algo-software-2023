@@ -158,7 +158,7 @@ gaussian_logp <- function(x, Sigma_inv) {
 }
 
 gaussian_grad <- function(x, Sigma_inv) {
-  grad <- rep(0, length(x)) # Replace with an actual formula
+  grad <- -Sigma_inv %*% x
   return(grad)
 }
 
