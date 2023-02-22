@@ -174,6 +174,15 @@ testthat::expect_true(are_all_close(
 
 ## Things to commit/submit
 For Part A, completed code and answers to the questions.
+Answer for part A: From the class lecture, the error associated with the centered difference method is (step size)^2. So, for a plot of the relative error and the step size in log-log scale, 
+the expected slope should be 2. The relative error plot does not 100% agree with what the mathematical theory predicts because the plot is V-shape, not a straight line. 
+There is a critical point where, passing that point, the relative error increases with smaller step sizes. Sure enough, the slope of the first part is close to 2 
+(pick 2 points of the relative errors and step sizes before the critical value and directly calculate the slope). The slope in the "latter part" though is close to -1
+(pick 2 points of the relative errors and step sizes after the critical value). This happens because there is a limitation in .Machine$double.eps (at ~2e-16). 
+If the limitation is included in the relative error calculation, the relative error would be bound with (machine error/step size) + (step size)^2. So when the step size is small,
+the relative error is bound by (step_size)^2 term, hence the first part of the V-shaped plot. However, when the step size is very small, the term (machine error/step size) becomes
+dominant, hence the latter part of the plot. 
+
 For Part B, completed code that passes the test.
 
 
