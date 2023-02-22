@@ -83,7 +83,11 @@ log_logistic_func <- function(x) {
 }
 
 log_logistic_deriv <- function(x) {
-  # Fill in
+  # The derivative can be found using this following commands
+  # f = expression(log(exp(x)/(1+exp(x))))
+  # f_deriv <- D(f,"x")
+  log_logistic_deriv_out <- (exp(x)/(1 + exp(x)) - exp(x) * exp(x)/(1 + exp(x))^2)/(exp(x)/(1 + exp(x)))
+  return(log_logistic_deriv_out)
 }
 
 # Calculate and plot the relative errors of finite difference approximations
