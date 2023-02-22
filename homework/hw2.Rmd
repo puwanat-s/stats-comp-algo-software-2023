@@ -54,6 +54,11 @@ sample_var_with_question_mark <- (sample_sec_mom - (sample_mean)^2)
 ## Things to commit/submit
 Answers to the questions above.
 
+Answer: The result of sample_var_with_question_mark is -147,456 with the given seed. This variance estimate does not make sense because rnorm(1) has sd = 1, so the estimate 
+should be around 1. Indeed, if the constant number in theta (1e10) is close to the sd (e.g.theta = 1e3 + rnorm(1)), the estimate would get close to 1, which is the sd^2, 
+and this result stays true even when there is no fixed seed. The estimate flutuates with a huge range when you increase or decrease the seed (for the case of theta = 1e10 + rnorn(1)). 
+Still, it is not close to 1. Without a fixed seed, the distribution of the estimator sample_var_with_question_mark looks like a normal distribution with a median at 0 
+(I tried running without a fixed seed 1,000 times and the range of the estimator is between -6e+05 and 6e+05). 
 
 # Exercise 2: Numerical differentiation
 
