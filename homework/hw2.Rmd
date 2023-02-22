@@ -73,7 +73,8 @@ What do you expect the slope of the plotted line to be?
 ```{r, eval=FALSE}
 #' Approximate derivative via centered-difference approximation
 approximate_deriv <- function(func, x, dx) {
-  # Fill in
+  approx_deriv_out <- (func(x+dx)-func(x-dx))/(2*dx)
+  return(approx_deriv_out)
 }
 
 log_logistic_func <- function(x) {
