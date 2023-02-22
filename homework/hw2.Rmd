@@ -78,7 +78,8 @@ approximate_deriv <- function(func, x, dx) {
 }
 
 log_logistic_func <- function(x) {
-  # Fill in
+  log_logistic_func_out <- log(exp(x)/(1+exp(x)))
+  return(log_logistic_func_out)
 }
 
 log_logistic_deriv <- function(x) {
