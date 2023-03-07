@@ -97,4 +97,8 @@ Why?
 ## Things to commit/submit
 
 * Link to the pull request.
+https://github.com/puwanat-s/hiperglm/pull/2
 * (Optional) Answer to the bonus question.
+Answer: No because there is an uncertainty associated with the estimated coefficients. This uncertainty comes from the variance-covariance matrix
+derived from an inverse of the Hessian matrix. We can think about the second derivative of the log-likelihood function as a measure of the function's curvature.
+The more curved the function (the second derivative is large), the more certain we feel that we get the "true" maximum (i.e. the variance of the optimum coefficient is small) and vice versa. 
