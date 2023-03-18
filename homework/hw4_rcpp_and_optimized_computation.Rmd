@@ -54,6 +54,12 @@ for (i in 1:10^6) {
 **Questions:**
 What behavior do you observe above? How do you explain it?
 
+**Answer:**
+First, the result from the single inner_prod(v,w) run is 1022, not 1023.
+Second, the result from the for loop run is not consistent and gives the error message.
+The cause of these problems comes from indexing in the for loop. C++ indexing starts from 0, not 1 
+as in R. Therefore, we need to change to i = 0 in C++ code. Furthermore, the loop should end at 1022, not 1023.
+So, it should be < v.size(), not <= v.size(). After these fixes, the indexing starts from 0 to 1022 = 1023 times in C++ which gives a correct answer consistently. 
 
 ## Part B: Sloppy matrix-matrix multiplication
 
@@ -79,6 +85,14 @@ dgemm_eigen(A, B)
 
 **Questions:**
 What do you get as an output? What if you re-run the code chunk? Explain the observed behavior.
+
+**Answer:**
+The output matrix had a 4x2 dimension in which the first column was all 1024 and the second column was all the same big number. 
+When I re-ran the whole code chunk, the numbers in the second column changed (they were all the same), but those in the first column stayed 1024. 
+I checked matrix A and B in the c++ and the matrices looked correct until the A * B operation. 
+It seems that Eigen "*" operation attempted to do matrix multiplication without checking the inner dimensions.
+Each row of A with a length of 1024 was dotted with a column of B with length 512 + 512 (all 1s), giving the first column of 1024s. 
+However, the second column of B was undefined, so the second column in the resulting matrix had unpredictable numbers.
 
 ## Part C: Consequence of "tresspassing"
 
@@ -113,6 +127,12 @@ Running the same piece of code from an R console (instead of an RStudio session)
 * Why does the second code chunk run fine?
 * Modify `axpy_c.cpp` to make the function safer to use.
 
+***Answer:***
+The RStudio crashed ! When run on R terminal, it said "***caught segfault***" address 0x134900000, cause 'invalid permissions.' 
+This happened because vector x is larger than vector y, causing an out-of-bounds memory access and leading to a segmentation fault. 
+The second code chunk runs fine because now vector x is smaller than vector y. To make `axpy_c.cpp` safer, add lines that 
+check if the sizes of vector x and y are the same before doing the operation. 
+
 
 # Exercise 3: Multiplying two matrices ain't quite what you learned in your linear algebra class
 
@@ -139,8 +159,11 @@ A <- matrix(rnorm(n_row_out * n_inner), nrow = n_row_out, ncol = n_inner)
 B <- matrix(rnorm(n_inner * n_col_out), nrow = n_inner, ncol = n_col_out)
 ```
 
-```{r}
+```{r, eval=FALSE}
 # Check the output of `row_col_dot_matmat`
+row_col_dot_matmat_out <- row_col_dot_matmat(A, B)
+base_R_matmat_out <- A %*% B
+all.equal(row_col_dot_matmat_out,base_R_matmat_out)
 ```
 
 ## Part B: Going one step beyond your linear algebra class
@@ -151,16 +174,28 @@ Recalling from lecture that "column-oriented" matrix-vector multiplication is mo
 Then compare performances of `row_col_dot_matmat` and `col_oriented_matmat` (but only after you test your column-oriented implementation).
 Which one is faster and why?
 
-```{r}
+```{r, eval=FALSE}
 # Check and benchmark
+col_oriented_matmat_out <- col_oriented_matmat(A, B)
+all.equal(col_oriented_matmat_out,base_R_matmat_out)
+
+bench::mark(row_col_dot_matmat(A, B))
+bench::mark(col_oriented_matmat(A, B))
 ```
+
+***Answer:***
+`col_oriented_matmat` is faster than `row_col_dot_matmat` (~180ms vs ~14s !) because R stores matrices in a column manner; therefore it is faster to access elements in a column-oriented way. 
 
 Also compare with performance of the matrix-matrix multiplication via `%*%` in R, which uses whatever the BLAS library your R was configured with.
 (You can find out which BLAS library R is using via `sessionInfo()` or `extSoftVersion()`.) 
 
-```{r}
+```{r, eval=FALSE}
 # Fill in
+bench::mark(A %*% B) 
 ```
+
+***Answer:***
+`col_oriented_matmat` is faster than `A %*% B` (~330ms). 
 
 When benchmarking alternative implementations (or alternative algorithms, more generally), keep in mind that the relative performance depends significantly on the size of a test problem.
 It is important, therefore, to benchmark your implementation/algorithm on problems of realistic size. 
@@ -215,5 +250,18 @@ Rcpp::sourceCpp(file.path("..", "lecture", "src", "gemm_eigen.cpp"))
 
 ```{r, eval=FALSE}
 # Benchmark
-dgemm_eigen(A, B)
+bench::mark(dgemm_eigen(A, B))
+bench::mark(row_col_dot_matmat(A, B))
+bench::mark(col_oriented_matmat(A, B))
 ```
+
+***Answer:***
+I created Makevars file inside ~/.R and selectively turned on and off SSE, AVX, and FMA.
+With the default mode, -O2 was already used as this resulting lines:
+"/Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB -o 'sourceCpp_4.so' 'gemm_eigen.cpp' 
+clang++ -arch arm64 -std=gnu++14 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/Rcpp/include" -I"/Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/library/RcppEigen/include" -I"/Users/puwanatsang/Documents/PH.140.778.SP23/stats-comp-algo-software-2023/lecture/src" -I/opt/R/arm64/include   -fPIC  -falign-functions=64 -Wall -g -O2  -c gemm_eigen.cpp -o gemm_eigen.o
+clang++ -arch arm64 -std=gnu++14 -dynamiclib -Wl,-headerpad_max_install_names -undefined dynamic_lookup -single_module -multiply_defined suppress -L/Library/Frameworks/R.framework/Resources/lib -L/opt/R/arm64/lib -o sourceCpp_4.so gemm_eigen.o -F/Library/Frameworks/R.framework/.. -framework R -Wl,-framework -Wl,CoreFoundation"
+The relative speed from the fastest to slowest is as follows: `dgemm_eigen` (56ms), `col_oriented_matmat` (183ms), and `row_col_dot_matmat` (13s).
+I also observed that when I took the charger off, the speed got slower. 
+Next, I tried `CXXFLAGS += -mno-sse`, `CXXFLAGS += -msse`, `CXXFLAGS += -msse4`, `CXXFLAGS += -mavx`, `CXXFLAGS += -mfma`, and `CXXFLAGS += -mavx -mfma`.
+However, the speeds of the three algorithms stayed relatively the same. This happened because I used Macbook M2 chip, and the optimizers only worked with intel chips.
